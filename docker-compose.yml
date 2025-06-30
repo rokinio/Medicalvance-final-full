@@ -5,7 +5,7 @@ services:
       dockerfile: Dockerfile
     container_name: medplatform_backend
     ports:
-      - "5050:5000" # بک‌اند روی پورت 5050 سیستم شما اجرا می‌شود
+      - "5050:5000"
     volumes:
       - ./backend:/usr/src/app
       - /usr/src/app/node_modules
@@ -14,7 +14,7 @@ services:
       - .env
     depends_on:
       db:
-        condition: service_healthy # <--- منتظر می‌ماند تا دیتابیس سالم باشد
+        condition: service_healthy
     restart: unless-stopped
 
   frontend:
@@ -23,14 +23,9 @@ services:
       dockerfile: Dockerfile
     container_name: medplatform_frontend
     ports:
-      - "5177:5173" # فرانت‌اند روی پورت 5177 سیستم شما اجرا می‌شود
-    volumes:
-      - ./frontend:/app
-      - /app/node_modules
-    environment:
-      # این آدرس درست است، چون از مرورگر شما فراخوانی می‌شود
-      - VITE_API_BASE_URL=http://localhost:5050
+      - "5177:80"
     restart: unless-stopped
+    # این سرویس دیگر نیازی به depends_on ندارد چون وب‌سرور Nginx سریع اجرا می‌شود
 
   db:
     image: mysql:8.0
@@ -45,7 +40,7 @@ services:
     volumes:
       - db_data:/var/lib/mysql
     restart: unless-stopped
-    healthcheck: # <--- این بخش برای حل مشکل اضافه شده است
+    healthcheck:
       test:
         [
           "CMD",
