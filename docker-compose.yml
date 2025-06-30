@@ -1,0 +1,65 @@
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: medplatform_backend
+    ports:
+      - "5050:5000" # بک‌اند روی پورت 5050 سیستم شما اجرا می‌شود
+    volumes:
+      - ./backend:/usr/src/app
+      - /usr/src/app/node_modules
+      - ./backend/uploads:/usr/src/app/uploads
+    env_file:
+      - .env
+    depends_on:
+      db:
+        condition: service_healthy # <--- منتظر می‌ماند تا دیتابیس سالم باشد
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: medplatform_frontend
+    ports:
+      - "5177:5173" # فرانت‌اند روی پورت 5177 سیستم شما اجرا می‌شود
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    environment:
+      # این آدرس درست است، چون از مرورگر شما فراخوانی می‌شود
+      - VITE_API_BASE_URL=http://localhost:5050
+    restart: unless-stopped
+
+  db:
+    image: mysql:8.0
+    container_name: medplatform_db
+    ports:
+      - "3307:3306"
+    environment:
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_USER: ${DB_USER}
+      MYSQL_PASSWORD: ${DB_PASS}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+    volumes:
+      - db_data:/var/lib/mysql
+    restart: unless-stopped
+    healthcheck: # <--- این بخش برای حل مشکل اضافه شده است
+      test:
+        [
+          "CMD",
+          "mysqladmin",
+          "ping",
+          "-h",
+          "localhost",
+          "-u",
+          "root",
+          "-p${DB_ROOT_PASSWORD}",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  db_data:

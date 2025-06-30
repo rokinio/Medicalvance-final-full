@@ -1,0 +1,28 @@
+{
+  "name": "medical-platform-backend-mysql",
+  "version": "1.0.0",
+  "description": "Backend for MedPlatform with MySQL",
+  "main": "server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js",
+    "admin:seed": "node seedAdmin.js",
+    "db:sync": "node -e \"import('./config/db.js').then(db => db.default.sync({ force: true }))\""
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "express-validator": "^7.1.0",
+    "jsonwebtoken": "^9.0.2",
+    "multer": "^1.4.5-lts.1",
+    "mysql2": "^3.10.3",
+    "sequelize": "^6.37.3",
+    "uuid": "^10.0.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.4"
+  }
+}
