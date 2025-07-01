@@ -5,11 +5,9 @@ services:
       dockerfile: Dockerfile
     container_name: medplatform_backend
     environment:
-      # به nginx-proxy می‌گوید که این کانتینر را برای این دامنه در دسترس قرار بده
+      # این متغیرها به nginx-proxy می‌گویند که ترافیک API را به اینجا بفرستد
       - VIRTUAL_HOST=my.medicalvance.com
-      # به nginx-proxy می‌گوید که درخواست‌های API را به این پورت بفرست
       - VIRTUAL_PORT=5000
-      # به nginx-proxy می‌گوید که گواهی SSL را برای این دامنه فعال کند
       - LETSENCRYPT_HOST=my.medicalvance.com
     env_file:
       - .env
@@ -17,7 +15,6 @@ services:
       db:
         condition: service_healthy
     restart: unless-stopped
-    # پورت‌ها دیگر به بیرون expose نمی‌شوند، nginx-proxy این کار را می‌کند
 
   frontend:
     build:
@@ -25,15 +22,14 @@ services:
       dockerfile: Dockerfile
     container_name: medplatform_frontend
     environment:
-      # فرانت‌اند هم روی همین دامنه اصلی سرو می‌شود
+      # این متغیرها به nginx-proxy می‌گویند که ترافیک اصلی سایت را به اینجا بفرستد
       - VIRTUAL_HOST=my.medicalvance.com
       - VIRTUAL_PORT=5173
       - LETSENCRYPT_HOST=my.medicalvance.com
     restart: unless-stopped
 
   db:
-    build:
-      context: ./db # <--- یک پوشه جدید برای دیتابیس می‌سازیم
+    image: mysql:8.0 # <-- مشکل اینجا بود. ما مستقیماً از ایمیج رسمی استفاده می‌کنیم
     container_name: medplatform_db
     environment:
       MYSQL_DATABASE: ${DB_NAME}
@@ -62,8 +58,7 @@ services:
 volumes:
   db_data:
 
-# مهم: مطمئن شوید که همه کانتینرها به شبکه nginx-proxy متصل هستند
 networks:
   default:
     external:
-      name: nginx-proxy # نام شبکه پیش‌فرض nginx-proxy معمولاً این است
+      name: nginx-proxy
