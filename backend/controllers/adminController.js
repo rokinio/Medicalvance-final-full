@@ -3,7 +3,7 @@ import { v4 as uuidv4 } from "uuid";
 import { sendPasswordResetEmail } from "../services/emailService.js";
 import { Op } from "sequelize";
 
-// تابع قبلی برای گرفتن پزشکان
+// تابع برای گرفتن تمام کاربران
 export const getUsers = async (req, res) => {
   try {
     const { role, status, search, tab } = req.query;
@@ -37,20 +37,7 @@ export const getUsers = async (req, res) => {
   }
 };
 
-// --- تابع جدید برای گرفتن بیماران ---
-export const getPatients = async (req, res) => {
-  try {
-    const patients = await User.findAll({
-      where: { role: "patient" },
-      attributes: { exclude: ["password", "isAccountApproved", "status"] },
-    });
-    res.json(patients);
-  } catch (error) {
-    res.status(500).json({ message: "Server error", error: error.message });
-  }
-};
-// --- پایان تابع جدید ---
-
+// تابع برای تایید دکتر
 export const approveDoctor = async (req, res) => {
   const doctor = await User.findByPk(req.params.id);
   if (doctor && doctor.role === "doctor") {
@@ -63,6 +50,7 @@ export const approveDoctor = async (req, res) => {
   }
 };
 
+// تابع برای رد کردن دکتر
 export const rejectDoctor = async (req, res) => {
   const doctor = await User.findByPk(req.params.id);
   if (doctor && doctor.role === "doctor") {
@@ -75,6 +63,7 @@ export const rejectDoctor = async (req, res) => {
   }
 };
 
+// تابع برای ارسال ایمیل ریست پسورد
 export const triggerPasswordReset = async (req, res) => {
   try {
     const user = await User.findByPk(req.params.id);
@@ -89,6 +78,29 @@ export const triggerPasswordReset = async (req, res) => {
 
     await sendPasswordResetEmail(user.email, resetToken);
     res.json({ message: `Password reset email sent to ${user.email}.` });
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+// --- تابع جدید برای حذف کاربر ---
+export const deleteUser = async (req, res) => {
+  try {
+    const user = await User.findByPk(req.params.id);
+
+    if (!user) {
+      return res.status(404).json({ message: "کاربر پیدا نشد" });
+    }
+
+    // جلوگیری از حذف کاربر با نقش ادمین
+    if (user.role === "admin") {
+      return res
+        .status(403)
+        .json({ message: "امکان حذف کاربر ادمین وجود ندارد." });
+    }
+
+    await user.destroy();
+    res.json({ message: "کاربر با موفقیت حذف شد." });
   } catch (error) {
     res.status(500).json({ message: "Server error", error: error.message });
   }

@@ -11,6 +11,7 @@ import {
   FileText,
   Globe,
   Phone,
+  Trash2, // آیکون سطل زباله برای حذف
 } from "lucide-react";
 
 const API_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:5050";
@@ -111,7 +112,35 @@ const AdminDashboard: React.FC = () => {
     }
   };
 
-  // --- تابع کامل شده برای نمایش وضعیت ---
+  // --- تابع جدید برای حذف کاربر ---
+  const handleDelete = async (userId: string) => {
+    if (
+      !user?.token ||
+      !window.confirm(
+        "آیا از حذف این کاربر اطمینان دارید؟ این عمل قابل بازگشت نیست."
+      )
+    ) {
+      return;
+    }
+
+    try {
+      const res = await fetch(`${API_URL}/api/admin/users/${userId}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${user.token}` },
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.message || "خطا در حذف کاربر.");
+      }
+
+      alert("کاربر با موفقیت حذف شد.");
+      fetchUsers(); // Refresh the user list
+    } catch (err: any) {
+      alert(`خطا: ${err.message}`);
+    }
+  };
+
   const getStatusBadge = (status?: "pending" | "approved" | "rejected") => {
     switch (status) {
       case "pending":
@@ -307,6 +336,17 @@ const AdminDashboard: React.FC = () => {
                       >
                         <KeyRound />
                       </button>
+
+                      {/* --- دکمه حذف کاربر --- */}
+                      {u.role !== "admin" && (
+                        <button
+                          onClick={() => handleDelete(u.id)}
+                          className="text-gray-400 hover:text-red-600"
+                          title="Delete User"
+                        >
+                          <Trash2 />
+                        </button>
+                      )}
                     </td>
                   </tr>
                 ))
