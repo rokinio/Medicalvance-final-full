@@ -4,33 +4,36 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     container_name: medplatform_backend
-    environment:
-      # این متغیرها به nginx-proxy می‌گویند که ترافیک API را به اینجا بفرستد
-      - VIRTUAL_HOST=my.medicalvance.com
-      - VIRTUAL_PORT=5000
-      - LETSENCRYPT_HOST=my.medicalvance.com
+    restart: unless-stopped
     env_file:
       - .env
-    depends_on:
-      db:
-        condition: service_healthy
-    restart: unless-stopped
+    # ما دیگر پورت‌ها را مستقیماً به هاست متصل نمی‌کنیم،
+    # چون وب‌سرور شما از طریق شبکه داخلی به آن دسترسی خواهد داشت.
+    # ports:
+    #   - "5050:5000"
+    volumes:
+      - ./backend:/usr/src/app
+      - /usr/src/app/node_modules
+      - ./backend/uploads:/usr/src/app/uploads
+    networks:
+      - hamyar-network # اتصال به شبکه خارجی شما
+      - default # اتصال به شبکه داخلی برای ارتباط با دیتابیس
 
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile
     container_name: medplatform_frontend
-    environment:
-      # این متغیرها به nginx-proxy می‌گویند که ترافیک اصلی سایت را به اینجا بفرستد
-      - VIRTUAL_HOST=my.medicalvance.com
-      - VIRTUAL_PORT=5173
-      - LETSENCRYPT_HOST=my.medicalvance.com
     restart: unless-stopped
+    # ports:
+    #   - "5177:80"
+    networks:
+      - hamyar-network
 
   db:
-    image: mysql:8.0 # <-- مشکل اینجا بود. ما مستقیماً از ایمیج رسمی استفاده می‌کنیم
+    image: mysql:8.0
     container_name: medplatform_db
+    restart: unless-stopped
     environment:
       MYSQL_DATABASE: ${DB_NAME}
       MYSQL_USER: ${DB_USER}
@@ -38,27 +41,13 @@ services:
       MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
     volumes:
       - db_data:/var/lib/mysql
-    restart: unless-stopped
-    healthcheck:
-      test:
-        [
-          "CMD",
-          "mysqladmin",
-          "ping",
-          "-h",
-          "localhost",
-          "-u",
-          "root",
-          "-p${DB_ROOT_PASSWORD}",
-        ]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+    networks:
+      - default # دیتابیس فقط در شبکه داخلی قرار می‌گیرد
 
 volumes:
   db_data:
 
 networks:
-  default:
-    external:
-      name: nginx-proxy
+  hamyar-network:
+    external: true # تعریف شبکه خارجی
+  default: # تعریف شبکه داخلی پیش‌فرض
