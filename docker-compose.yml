@@ -4,34 +4,37 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     container_name: medplatform_backend
-    ports:
-      - "5050:5000"
-    volumes:
-      - ./backend:/usr/src/app
-      - /usr/src/app/node_modules
-      - ./backend/uploads:/usr/src/app/uploads
+    environment:
+      # به nginx-proxy می‌گوید که این کانتینر را برای این دامنه در دسترس قرار بده
+      - VIRTUAL_HOST=my.medicalvance.com
+      # به nginx-proxy می‌گوید که درخواست‌های API را به این پورت بفرست
+      - VIRTUAL_PORT=5000
+      # به nginx-proxy می‌گوید که گواهی SSL را برای این دامنه فعال کند
+      - LETSENCRYPT_HOST=my.medicalvance.com
     env_file:
       - .env
     depends_on:
       db:
         condition: service_healthy
     restart: unless-stopped
+    # پورت‌ها دیگر به بیرون expose نمی‌شوند، nginx-proxy این کار را می‌کند
 
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile
     container_name: medplatform_frontend
-    ports:
-      - "5177:80"
+    environment:
+      # فرانت‌اند هم روی همین دامنه اصلی سرو می‌شود
+      - VIRTUAL_HOST=my.medicalvance.com
+      - VIRTUAL_PORT=5173
+      - LETSENCRYPT_HOST=my.medicalvance.com
     restart: unless-stopped
-    # این سرویس دیگر نیازی به depends_on ندارد چون وب‌سرور Nginx سریع اجرا می‌شود
 
   db:
-    image: mysql:8.0
+    build:
+      context: ./db # <--- یک پوشه جدید برای دیتابیس می‌سازیم
     container_name: medplatform_db
-    ports:
-      - "3307:3306"
     environment:
       MYSQL_DATABASE: ${DB_NAME}
       MYSQL_USER: ${DB_USER}
@@ -58,3 +61,9 @@ services:
 
 volumes:
   db_data:
+
+# مهم: مطمئن شوید که همه کانتینرها به شبکه nginx-proxy متصل هستند
+networks:
+  default:
+    external:
+      name: nginx-proxy # نام شبکه پیش‌فرض nginx-proxy معمولاً این است
