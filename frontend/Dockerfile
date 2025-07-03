@@ -20,6 +20,11 @@ RUN npm run build
 # Stage 2: Serve the application with Nginx
 FROM nginx:stable-alpine
 COPY --from=builder /app/dist /usr/share/nginx/html
-# COPY nginx.conf /etc/nginx/conf.d/default.conf # (اختیاری)
+
+# highlight-start
+# این خط را از حالت کامنت خارج کنید تا فایل تنظیمات کپی شود
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+# highlight-end
+
 EXPOSE 80
 CMD ["nginx", "-g", "daemon off;"]

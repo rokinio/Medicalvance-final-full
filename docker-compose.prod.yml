@@ -1,0 +1,16 @@
+# docker-compose.prod.yml (فقط شامل تغییرات سرور)
+
+services:
+  backend:
+    env_file:
+      - .env.prod # فایل متغیرهای مخصوص سرور را بخوان
+
+  frontend:
+    build:
+      args:
+        # آدرس API برای سرور اصلی را اینجا مشخص می‌کنیم
+        VITE_API_BASE_URL: https://my.medicalvance.com
+
+  db:
+    env_file:
+      - .env.prod # فایل متغیرهای مخصوص سرور را بخوان
