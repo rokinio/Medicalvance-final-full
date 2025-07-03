@@ -4,3 +4,5 @@ dist
 .env.docker.local
 uploads
 .env
+.env.*
+*.local
