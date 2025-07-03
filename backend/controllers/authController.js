@@ -13,7 +13,16 @@ const generateToken = (id) => {
 
 export const registerUser = async (req, res) => {
   try {
-    const { email, password, role, ...profileData } = req.body;
+    const {
+      email,
+      password,
+      role,
+      location, // نام جدید
+      languages,
+      education,
+      tags,
+      ...profileData
+    } = req.body;
 
     const userExists = await User.findOne({ where: { email } });
     if (userExists) {
@@ -24,6 +33,10 @@ export const registerUser = async (req, res) => {
       email,
       password,
       role,
+      location, // استفاده از نام جدید
+      languages: languages ? JSON.parse(languages) : [], // تبدیل رشته JSON به آرایه
+      education,
+      tags: tags ? JSON.parse(tags) : [], // تبدیل رشته JSON به آرایه
       ...profileData,
       isAccountApproved: role === "doctor" ? false : true,
       status: role === "doctor" ? "pending" : "approved",

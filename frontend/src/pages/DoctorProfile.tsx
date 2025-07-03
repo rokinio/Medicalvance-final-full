@@ -12,23 +12,62 @@ import {
   FileText,
   Calendar,
   Camera,
+  Tag,
+  BookOpen,
+  Languages,
+  MapPin,
 } from "lucide-react";
 
 const API_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:5050";
+
+// Updated list of top 10 languages
+const availableLanguages = [
+  "English",
+  "Mandarin Chinese",
+  "Hindi",
+  "Spanish",
+  "French",
+  "Standard Arabic",
+  "Bengali",
+  "Russian",
+  "Portuguese",
+  "Urdu",
+];
+
+// A sample list of countries for the location dropdown
+const countries = [
+  "United States",
+  "Canada",
+  "United Kingdom",
+  "Germany",
+  "France",
+  "Australia",
+  "Iran",
+  "Turkey",
+  "India",
+  "China",
+  "Russia",
+];
 
 const DoctorProfile: React.FC = () => {
   const { user, updateUserState } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   const [isPasswordModalOpen, setPasswordModalOpen] = useState(false);
   const [isDocumentsModalOpen, setDocumentsModalOpen] = useState(false);
+
   const [editData, setEditData] = useState({
     firstName: "",
     lastName: "",
     phone: "",
     specialties: "",
     bio: "",
+    location: "",
+    education: "",
+    tags: [] as string[],
+    languages: [] as string[],
   });
 
+  // Reset editData to user's current data when editing starts or user data changes
   useEffect(() => {
     if (user) {
       setEditData({
@@ -37,9 +76,13 @@ const DoctorProfile: React.FC = () => {
         phone: user.phone || "",
         specialties: user.specialties || "",
         bio: user.bio || "",
+        location: user.location || "",
+        education: user.education || "",
+        tags: user.tags || [],
+        languages: user.languages || [],
       });
     }
-  }, [user]);
+  }, [user, isEditing]); // Rerun effect to reset form on cancel
 
   const handleSave = async () => {
     if (!user?.token) return;
@@ -62,9 +105,29 @@ const DoctorProfile: React.FC = () => {
   };
 
   const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+    >
   ) => {
     setEditData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+  };
+
+  const handleLanguageChange = (language: string) => {
+    setEditData((prev) => ({
+      ...prev,
+      languages: prev.languages.includes(language)
+        ? prev.languages.filter((lang) => lang !== language)
+        : [...prev.languages, language],
+    }));
+  };
+
+  const handleTagsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const tagsArray = e.target.value.split(",").map((tag) => tag.trim());
+    setEditData((prev) => ({ ...prev, tags: tagsArray }));
+  };
+
+  const handleCancel = () => {
+    setIsEditing(false);
   };
 
   if (!user)
@@ -156,25 +219,30 @@ const DoctorProfile: React.FC = () => {
                     onClick={() => setPasswordModalOpen(true)}
                     className="inline-flex items-center px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 text-sm font-medium"
                   >
-                    <KeyRound className="w-4 h-4 mr-2" />
-                    Change Password
+                    <KeyRound className="w-4 h-4 mr-2" /> Change Password
                   </button>
                   {!isEditing ? (
                     <button
                       onClick={() => setIsEditing(true)}
                       className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
                     >
-                      <Edit className="w-4 h-4 mr-2" />
-                      Edit Profile
+                      <Edit className="w-4 h-4 mr-2" /> Edit Profile
                     </button>
                   ) : (
-                    <button
-                      onClick={handleSave}
-                      className="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
-                    >
-                      <Check className="w-4 h-4 mr-2" />
-                      Save Changes
-                    </button>
+                    <>
+                      <button
+                        onClick={handleCancel}
+                        className="inline-flex items-center px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700"
+                      >
+                        <X className="w-4 h-4 mr-2" /> Cancel
+                      </button>
+                      <button
+                        onClick={handleSave}
+                        className="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+                      >
+                        <Check className="w-4 h-4 mr-2" /> Save Changes
+                      </button>
+                    </>
                   )}
                 </div>
               </div>
@@ -207,30 +275,104 @@ const DoctorProfile: React.FC = () => {
                     />
                   </div>
                 </div>
-                <div>
-                  <label className="block font-medium text-gray-700">
-                    Email Address
-                  </label>
-                  <input
-                    type="email"
-                    value={user.email}
-                    disabled
-                    className="w-full px-4 py-3 rounded-lg bg-gray-100 text-gray-500 mt-2"
-                  />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block font-medium text-gray-700">
+                      Email Address
+                    </label>
+                    <input
+                      type="email"
+                      value={user.email}
+                      disabled
+                      className="w-full px-4 py-3 rounded-lg bg-gray-100 text-gray-500 mt-2"
+                    />
+                  </div>
+                  <div>
+                    <label className="block font-medium text-gray-700">
+                      Phone Number
+                    </label>
+                    <input
+                      type="tel"
+                      name="phone"
+                      value={editData.phone}
+                      onChange={handleChange}
+                      disabled={!isEditing}
+                      className="w-full px-4 py-3 border rounded-lg mt-2 disabled:bg-gray-50"
+                    />
+                  </div>
                 </div>
+
                 <div>
-                  <label className="block font-medium text-gray-700">
-                    Phone Number
+                  <label className="block font-medium text-gray-700 flex items-center">
+                    <MapPin className="w-4 h-4 mr-2 text-gray-400" />
+                    Location of Practice
                   </label>
-                  <input
-                    type="tel"
-                    name="phone"
-                    value={editData.phone}
-                    onChange={handleChange}
-                    disabled={!isEditing}
-                    className="w-full px-4 py-3 border rounded-lg mt-2 disabled:bg-gray-50"
-                  />
+                  {isEditing ? (
+                    <select
+                      name="location"
+                      value={editData.location}
+                      onChange={handleChange}
+                      className="w-full px-4 py-3 border rounded-lg mt-2 appearance-none bg-white"
+                    >
+                      <option value="" disabled>
+                        Select a country
+                      </option>
+                      {countries.map((country) => (
+                        <option key={country} value={country}>
+                          {country}
+                        </option>
+                      ))}
+                    </select>
+                  ) : (
+                    <p className="mt-2 text-gray-900 text-base p-3 bg-gray-50 rounded-lg">
+                      {editData.location || "Not specified"}
+                    </p>
+                  )}
                 </div>
+
+                <div>
+                  <label className="block font-medium text-gray-700 flex items-center">
+                    <Languages className="w-4 h-4 mr-2 text-gray-400" />
+                    Languages
+                  </label>
+                  {isEditing ? (
+                    <div className="p-4 border border-gray-300 rounded-lg mt-2 grid grid-cols-2 sm:grid-cols-3 gap-3">
+                      {availableLanguages.map((lang) => (
+                        <div key={lang} className="flex items-center">
+                          <input
+                            id={`edit-lang-${lang}`}
+                            type="checkbox"
+                            checked={editData.languages.includes(lang)}
+                            onChange={() => handleLanguageChange(lang)}
+                            className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                          />
+                          <label
+                            htmlFor={`edit-lang-${lang}`}
+                            className="ml-2 block text-sm text-gray-900"
+                          >
+                            {lang}
+                          </label>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="flex flex-wrap gap-2 mt-2">
+                      {editData.languages.length > 0 ? (
+                        editData.languages.map((lang) => (
+                          <span
+                            key={lang}
+                            className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-medium"
+                          >
+                            {lang}
+                          </span>
+                        ))
+                      ) : (
+                        <p className="text-gray-500">No languages listed.</p>
+                      )}
+                    </div>
+                  )}
+                </div>
+
                 <div>
                   <label className="block font-medium text-gray-700">
                     Specialization
@@ -244,6 +386,23 @@ const DoctorProfile: React.FC = () => {
                     className="w-full px-4 py-3 border rounded-lg mt-2 disabled:bg-gray-50"
                   />
                 </div>
+
+                <div>
+                  <label className="block font-medium text-gray-700 flex items-center">
+                    <BookOpen className="w-4 h-4 mr-2 text-gray-400" />
+                    Education
+                  </label>
+                  <textarea
+                    name="education"
+                    value={editData.education}
+                    onChange={handleChange}
+                    disabled={!isEditing}
+                    rows={4}
+                    className="w-full px-4 py-3 border rounded-lg mt-2 disabled:bg-gray-50"
+                    placeholder="List your degrees and qualifications..."
+                  />
+                </div>
+
                 <div>
                   <label className="block font-medium text-gray-700">
                     Biography
@@ -256,6 +415,38 @@ const DoctorProfile: React.FC = () => {
                     rows={4}
                     className="w-full px-4 py-3 border rounded-lg mt-2 disabled:bg-gray-50"
                   />
+                </div>
+
+                <div>
+                  <label className="block font-medium text-gray-700 flex items-center">
+                    <Tag className="w-4 h-4 mr-2 text-gray-400" />
+                    Tags
+                  </label>
+                  {isEditing ? (
+                    <input
+                      type="text"
+                      name="tags"
+                      value={editData.tags.join(", ")}
+                      onChange={handleTagsChange}
+                      className="w-full px-4 py-3 border rounded-lg mt-2"
+                      placeholder="Enter tags, separated by commas"
+                    />
+                  ) : (
+                    <div className="flex flex-wrap gap-2 mt-2">
+                      {editData.tags.length > 0 ? (
+                        editData.tags.map((tag) => (
+                          <span
+                            key={tag}
+                            className="px-3 py-1 bg-gray-100 text-gray-800 rounded-full text-xs font-medium"
+                          >
+                            {tag}
+                          </span>
+                        ))
+                      ) : (
+                        <p className="text-gray-500">No tags listed.</p>
+                      )}
+                    </div>
+                  )}
                 </div>
               </form>
             </div>
@@ -279,12 +470,10 @@ const DoctorProfile: React.FC = () => {
                     onClick={() => setDocumentsModalOpen(true)}
                     className="w-full flex items-center justify-center p-3 bg-white border rounded-lg text-sm font-medium hover:bg-gray-100"
                   >
-                    <FileText className="w-4 h-4 mr-2" />
-                    Manage Documents
+                    <FileText className="w-4 h-4 mr-2" /> Manage Documents
                   </button>
                   <button className="w-full flex items-center justify-center p-3 bg-white border rounded-lg text-sm font-medium hover:bg-gray-100">
-                    <Calendar className="w-4 h-4 mr-2" />
-                    Manage Schedule
+                    <Calendar className="w-4 h-4 mr-2" /> Manage Schedule
                   </button>
                 </div>
               </div>

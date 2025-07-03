@@ -25,16 +25,26 @@ export const updateUserProfile = async (req, res) => {
         "firstName",
         "lastName",
         "phone",
-        "nationality",
+        "location", // نام جدید
         "specialties",
         "website",
         "socialMedia",
         "bio",
+        "languages", // فیلد جدید
+        "education", // فیلد جدید
+        "tags",
       ];
 
       updatableFields.forEach((field) => {
         if (req.body[field] !== undefined) {
-          user[field] = req.body[field];
+          // برای فیلدهای JSON، اطمینان حاصل کنید که به صورت آرایه ذخیره می‌شوند
+          if (field === "languages" || field === "tags") {
+            user[field] = Array.isArray(req.body[field])
+              ? req.body[field]
+              : JSON.parse(req.body[field]);
+          } else {
+            user[field] = req.body[field];
+          }
         }
       });
 

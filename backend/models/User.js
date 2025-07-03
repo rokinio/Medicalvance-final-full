@@ -56,7 +56,7 @@ User.init(
     phone: {
       type: DataTypes.STRING,
     },
-    nationality: {
+    location: {
       type: DataTypes.STRING,
     },
     specialties: {
@@ -84,6 +84,17 @@ User.init(
     status: {
       type: DataTypes.ENUM("pending", "approved", "rejected"),
       defaultValue: "pending",
+    },
+    languages: {
+      type: DataTypes.JSON, // برای ذخیره آرایه‌ای از زبان‌ها
+      defaultValue: [],
+    },
+    education: {
+      type: DataTypes.TEXT, // برای ذخیره متن طولانی شامل سوابق تحصیلی
+    },
+    tags: {
+      type: DataTypes.JSON, // برای ذخیره آرایه‌ای از تگ‌ها
+      defaultValue: [],
     },
   },
   {

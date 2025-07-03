@@ -9,6 +9,10 @@ interface User {
   isEmailVerified: boolean;
   isAccountApproved?: boolean;
   token?: string;
+  location?: string; // فیلد جدید
+  languages?: string[]; // فیلد جدید
+  education?: string; // فیلد جدید
+  tags?: string[]; // فیلد جدید
   [key: string]: any;
 }
 
