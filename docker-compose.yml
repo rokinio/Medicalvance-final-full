@@ -18,6 +18,11 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+      # highlight-start
+      args:
+        # این متغیر را از هاست بخوان و به build پاس بده
+        - VITE_API_BASE_URL=${VITE_API_BASE_URL}
+      # highlight-end
     container_name: medplatform_frontend
     restart: unless-stopped
     ports:
