@@ -20,17 +20,19 @@ import {
 
 const API_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:5050";
 
-// Updated list of top 10 languages
+// Updated and complete list of available languages
 const availableLanguages = [
   "English",
-  "Mandarin Chinese",
-  "Hindi",
+  "Persian", // اضافه شد
+  "Arabic", // Standard Arabic -> Arabic
   "Spanish",
+  "German", // اضافه شد
   "French",
-  "Standard Arabic",
-  "Bengali",
   "Russian",
   "Portuguese",
+  "Mandarin Chinese",
+  "Hindi",
+  "Bengali",
   "Urdu",
 ];
 

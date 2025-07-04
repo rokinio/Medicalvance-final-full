@@ -11,25 +11,28 @@ import {
   Upload,
   Eye,
   EyeOff,
+  Globe,
+  Languages,
 } from "lucide-react";
 
-// کامپوننت‌های سفارشی که ایجاد کردیم
+// کامپوننت‌های سفارشی
 import MultiSelectDropdown from "../components/MultiSelectDropdown";
 import LocationAutocomplete from "../components/LocationAutocomplete";
 
-// لیست ثابت برای گزینه‌های تخصص
-const specialtyOptions = [
-  "Cardiology",
-  "Dermatology",
-  "Neurology",
-  "Pediatrics",
-  "Oncology",
-  "Orthopedics",
-  "Internal Medicine",
-  "Family Medicine",
-  "Psychiatry",
-  "General Surgery",
-  "Radiology",
+// لیست زبان‌های مهم برای انتخاب
+const languageOptions = [
+  "English",
+  "Persian",
+  "Arabic",
+  "Spanish",
+  "German",
+  "French",
+  "Russian",
+  "Portuguese",
+  "Mandarin Chinese",
+  "Hindi",
+  "Bengali",
+  "Urdu",
 ];
 
 const RegisterDoctor: React.FC = () => {
@@ -40,10 +43,9 @@ const RegisterDoctor: React.FC = () => {
     password: "",
     confirmPassword: "",
     phone: "",
-    // این فیلد برای نگهداری موقعیت مکانی است
     location: "",
-    // این فیلد برای نگهداری تخصص‌ها به صورت آرایه است
-    specialties: [] as string[],
+    specialties: "", // تبدیل به ورودی متنی ساده
+    languages: [] as string[], // فیلد جدید برای زبان‌ها
     website: "",
     socialMedia: "",
   });
@@ -74,8 +76,12 @@ const RegisterDoctor: React.FC = () => {
       setError("Please upload at least one document");
       return;
     }
-    if (formData.specialties.length === 0) {
-      setError("Please select at least one specialty");
+    if (!formData.specialties) {
+      setError("Please list your medical specialties");
+      return;
+    }
+    if (formData.languages.length === 0) {
+      setError("Please select at least one language");
       return;
     }
     if (!formData.location) {
@@ -85,24 +91,23 @@ const RegisterDoctor: React.FC = () => {
 
     setLoading(true);
     try {
+      // آماده‌سازی داده‌ها برای ارسال
       const dataToSend = {
         ...formData,
-        specialties: formData.specialties.join(", "),
-        // نام فیلد را برای بک‌اند به nationality تغییر می‌دهیم
-        nationality: formData.location,
         role: "doctor",
         documents,
         profileImage,
+        // تبدیل آرایه زبان‌ها به رشته جیسون برای ارسال به بک‌اند
+        languages: JSON.stringify(formData.languages),
       };
 
-      // فیلدهای اضافی و موقت را حذف می‌کنیم
+      // حذف فیلدهای اضافی که نباید به سرور ارسال شوند
       delete (dataToSend as any).confirmPassword;
-      delete (dataToSend as any).location;
 
       await register(dataToSend);
       navigate("/verify-email");
-    } catch (err) {
-      setError("Registration failed. Please try again.");
+    } catch (err: any) {
+      setError(err.message || "Registration failed. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -117,10 +122,11 @@ const RegisterDoctor: React.FC = () => {
     }));
   };
 
-  const handleSpecialtiesChange = (selected: string[]) => {
+  // کنترلر برای انتخاب زبان‌ها
+  const handleLanguagesChange = (selected: string[]) => {
     setFormData((prev) => ({
       ...prev,
-      specialties: selected,
+      languages: selected,
     }));
   };
 
@@ -179,9 +185,7 @@ const RegisterDoctor: React.FC = () => {
                   First Name
                 </label>
                 <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <User className="h-5 w-5 text-gray-400" />
-                  </div>
+                  <User className="absolute h-5 w-5 text-gray-400 left-3 top-3.5" />
                   <input
                     id="firstName"
                     name="firstName"
@@ -189,12 +193,11 @@ const RegisterDoctor: React.FC = () => {
                     required
                     value={formData.firstName}
                     onChange={handleChange}
-                    className="appearance-none relative block w-full pl-10 pr-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                    className="w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
                     placeholder="First name"
                   />
                 </div>
               </div>
-
               <div>
                 <label
                   htmlFor="lastName"
@@ -209,7 +212,7 @@ const RegisterDoctor: React.FC = () => {
                   required
                   value={formData.lastName}
                   onChange={handleChange}
-                  className="appearance-none relative block w-full px-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                  className="w-full px-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
                   placeholder="Last name"
                 />
               </div>
@@ -223,9 +226,7 @@ const RegisterDoctor: React.FC = () => {
                 Email Address
               </label>
               <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Mail className="h-5 w-5 text-gray-400" />
-                </div>
+                <Mail className="absolute h-5 w-5 text-gray-400 left-3 top-3.5" />
                 <input
                   id="email"
                   name="email"
@@ -233,7 +234,7 @@ const RegisterDoctor: React.FC = () => {
                   required
                   value={formData.email}
                   onChange={handleChange}
-                  className="appearance-none relative block w-full pl-10 pr-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                  className="w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
                   placeholder="Enter your email"
                 />
               </div>
@@ -248,9 +249,7 @@ const RegisterDoctor: React.FC = () => {
                   Password
                 </label>
                 <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <Lock className="h-5 w-5 text-gray-400" />
-                  </div>
+                  <Lock className="absolute h-5 w-5 text-gray-400 left-3 top-3.5" />
                   <input
                     id="password"
                     name="password"
@@ -258,7 +257,7 @@ const RegisterDoctor: React.FC = () => {
                     required
                     value={formData.password}
                     onChange={handleChange}
-                    className="appearance-none relative block w-full pl-10 pr-10 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                    className="w-full pl-10 pr-10 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
                     placeholder="Password"
                   />
                   <button
@@ -282,9 +281,7 @@ const RegisterDoctor: React.FC = () => {
                   Confirm Password
                 </label>
                 <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <Lock className="h-5 w-5 text-gray-400" />
-                  </div>
+                  <Lock className="absolute h-5 w-5 text-gray-400 left-3 top-3.5" />
                   <input
                     id="confirmPassword"
                     name="confirmPassword"
@@ -292,7 +289,7 @@ const RegisterDoctor: React.FC = () => {
                     required
                     value={formData.confirmPassword}
                     onChange={handleChange}
-                    className="appearance-none relative block w-full pl-10 pr-10 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                    className="w-full pl-10 pr-10 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
                     placeholder="Confirm password"
                   />
                   <button
@@ -319,9 +316,7 @@ const RegisterDoctor: React.FC = () => {
                   Phone Number
                 </label>
                 <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <Phone className="h-5 w-5 text-gray-400" />
-                  </div>
+                  <Phone className="absolute h-5 w-5 text-gray-400 left-3 top-3.5" />
                   <input
                     id="phone"
                     name="phone"
@@ -329,7 +324,7 @@ const RegisterDoctor: React.FC = () => {
                     required
                     value={formData.phone}
                     onChange={handleChange}
-                    className="appearance-none relative block w-full pl-10 pr-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                    className="w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
                     placeholder="Phone number"
                   />
                 </div>
@@ -349,6 +344,7 @@ const RegisterDoctor: React.FC = () => {
               </div>
             </div>
 
+            {/* --- بخش تخصص‌ها --- */}
             <div>
               <label
                 htmlFor="specialties"
@@ -356,11 +352,34 @@ const RegisterDoctor: React.FC = () => {
               >
                 Medical Specialties <span className="text-red-500">*</span>
               </label>
+              <textarea
+                id="specialties"
+                name="specialties"
+                required
+                value={formData.specialties}
+                onChange={handleChange}
+                rows={3}
+                className="appearance-none relative block w-full px-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                placeholder="List your medical specialties (e.g., Cardiology, Dermatology...)"
+              />
+            </div>
+
+            {/* --- بخش جدید زبان‌ها --- */}
+            <div>
+              <label
+                htmlFor="languages"
+                className="block text-sm font-medium text-gray-700 mb-2"
+              >
+                <div className="flex items-center">
+                  <Languages className="w-4 h-4 mr-2" />
+                  Languages Spoken <span className="text-red-500 ml-1">*</span>
+                </div>
+              </label>
               <MultiSelectDropdown
-                options={specialtyOptions}
-                selectedOptions={formData.specialties}
-                onChange={handleSpecialtiesChange}
-                placeholder="Select your specialties"
+                options={languageOptions}
+                selectedOptions={formData.languages}
+                onChange={handleLanguagesChange}
+                placeholder="Select languages you speak"
               />
             </div>
 
@@ -396,7 +415,6 @@ const RegisterDoctor: React.FC = () => {
                   </p>
                 )}
               </div>
-
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Medical Documents <span className="text-red-500">*</span>
