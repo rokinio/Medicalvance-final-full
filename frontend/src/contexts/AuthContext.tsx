@@ -1,7 +1,12 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 
-const API_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:5050";
+const API_URL = import.meta.env.VITE_API_BASE_URL;
 
+if (!API_URL) {
+  throw new Error(
+    "Fatal Error: VITE_API_BASE_URL is not defined in the build configuration."
+  );
+}
 interface User {
   id: string;
   email: string;
