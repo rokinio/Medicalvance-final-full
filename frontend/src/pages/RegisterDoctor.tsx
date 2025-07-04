@@ -7,16 +7,17 @@ import {
   Mail,
   Lock,
   Phone,
-  Globe,
   FileText,
   Upload,
   Eye,
   EyeOff,
 } from "lucide-react";
-// کامپوننت جدید را وارد کنید
-import MultiSelectDropdown from "../components/MultiSelectDropdown";
 
-// لیست تخصص ها برای نمایش در دراپ دان
+// کامپوننت‌های سفارشی که ایجاد کردیم
+import MultiSelectDropdown from "../components/MultiSelectDropdown";
+import LocationAutocomplete from "../components/LocationAutocomplete";
+
+// لیست ثابت برای گزینه‌های تخصص
 const specialtyOptions = [
   "Cardiology",
   "Dermatology",
@@ -39,12 +40,14 @@ const RegisterDoctor: React.FC = () => {
     password: "",
     confirmPassword: "",
     phone: "",
-    nationality: "",
-    // specialties را به یک آرایه خالی تغییر دهید
+    // این فیلد برای نگهداری موقعیت مکانی است
+    location: "",
+    // این فیلد برای نگهداری تخصص‌ها به صورت آرایه است
     specialties: [] as string[],
     website: "",
     socialMedia: "",
   });
+
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [documents, setDocuments] = useState<File[]>([]);
@@ -63,35 +66,38 @@ const RegisterDoctor: React.FC = () => {
       setError("Passwords do not match");
       return;
     }
-
     if (formData.password.length < 6) {
       setError("Password must be at least 6 characters long");
       return;
     }
-
     if (documents.length === 0) {
       setError("Please upload at least one document");
       return;
     }
-
     if (formData.specialties.length === 0) {
       setError("Please select at least one specialty");
+      return;
+    }
+    if (!formData.location) {
+      setError("Please select your location");
       return;
     }
 
     setLoading(true);
     try {
-      // قبل از ارسال، آرایه تخصص ها را به یک رشته متنی تبدیل کنید
       const dataToSend = {
         ...formData,
         specialties: formData.specialties.join(", "),
+        // نام فیلد را برای بک‌اند به nationality تغییر می‌دهیم
+        nationality: formData.location,
         role: "doctor",
         documents,
         profileImage,
       };
 
-      // داده های قدیمی را از dataToSend حذف کنید
+      // فیلدهای اضافی و موقت را حذف می‌کنیم
       delete (dataToSend as any).confirmPassword;
+      delete (dataToSend as any).location;
 
       await register(dataToSend);
       navigate("/verify-email");
@@ -111,11 +117,17 @@ const RegisterDoctor: React.FC = () => {
     }));
   };
 
-  // یک handler جدید برای مدیریت تغییرات در کامپوننت چند انتخابی
   const handleSpecialtiesChange = (selected: string[]) => {
     setFormData((prev) => ({
       ...prev,
       specialties: selected,
+    }));
+  };
+
+  const handleLocationChange = (value: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      location: value,
     }));
   };
 
@@ -135,7 +147,6 @@ const RegisterDoctor: React.FC = () => {
     <div className="min-h-screen bg-gradient-to-br from-green-50 to-emerald-100 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-2xl mx-auto">
         <div className="bg-white rounded-2xl shadow-xl p-8">
-          {/* Header */}
           <div className="text-center mb-8">
             <Link
               to="/"
@@ -152,7 +163,6 @@ const RegisterDoctor: React.FC = () => {
             </p>
           </div>
 
-          {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-6">
             {error && (
               <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
@@ -160,7 +170,6 @@ const RegisterDoctor: React.FC = () => {
               </div>
             )}
 
-            {/* Name Fields */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label
@@ -206,7 +215,6 @@ const RegisterDoctor: React.FC = () => {
               </div>
             </div>
 
-            {/* Email */}
             <div>
               <label
                 htmlFor="email"
@@ -231,7 +239,6 @@ const RegisterDoctor: React.FC = () => {
               </div>
             </div>
 
-            {/* Password Fields */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label
@@ -267,7 +274,6 @@ const RegisterDoctor: React.FC = () => {
                   </button>
                 </div>
               </div>
-
               <div>
                 <label
                   htmlFor="confirmPassword"
@@ -304,7 +310,6 @@ const RegisterDoctor: React.FC = () => {
               </div>
             </div>
 
-            {/* Contact Info */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label
@@ -329,28 +334,21 @@ const RegisterDoctor: React.FC = () => {
                   />
                 </div>
               </div>
-
               <div>
                 <label
-                  htmlFor="nationality"
+                  htmlFor="location"
                   className="block text-sm font-medium text-gray-700 mb-2"
                 >
-                  Nationality
+                  City & Country <span className="text-red-500">*</span>
                 </label>
-                <input
-                  id="nationality"
-                  name="nationality"
-                  type="text"
-                  required
-                  value={formData.nationality}
-                  onChange={handleChange}
-                  className="appearance-none relative block w-full px-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                  placeholder="Nationality"
+                <LocationAutocomplete
+                  value={formData.location}
+                  onChange={handleLocationChange}
+                  placeholder="Search for a city..."
                 />
               </div>
             </div>
 
-            {/* Specialties - جایگزینی textarea با کامپوننت جدید */}
             <div>
               <label
                 htmlFor="specialties"
@@ -366,51 +364,6 @@ const RegisterDoctor: React.FC = () => {
               />
             </div>
 
-            {/* Optional Fields */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label
-                  htmlFor="website"
-                  className="block text-sm font-medium text-gray-700 mb-2"
-                >
-                  Website <span className="text-gray-400">(Optional)</span>
-                </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <Globe className="h-5 w-5 text-gray-400" />
-                  </div>
-                  <input
-                    id="website"
-                    name="website"
-                    type="url"
-                    value={formData.website}
-                    onChange={handleChange}
-                    className="appearance-none relative block w-full pl-10 pr-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                    placeholder="https://your-website.com"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label
-                  htmlFor="socialMedia"
-                  className="block text-sm font-medium text-gray-700 mb-2"
-                >
-                  Social Media <span className="text-gray-400">(Optional)</span>
-                </label>
-                <input
-                  id="socialMedia"
-                  name="socialMedia"
-                  type="text"
-                  value={formData.socialMedia}
-                  onChange={handleChange}
-                  className="appearance-none relative block w-full px-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                  placeholder="@username or profile URL"
-                />
-              </div>
-            </div>
-
-            {/* File Uploads */}
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -481,7 +434,6 @@ const RegisterDoctor: React.FC = () => {
               </div>
             </div>
 
-            {/* Submit Button */}
             <button
               type="submit"
               disabled={loading}
@@ -489,28 +441,7 @@ const RegisterDoctor: React.FC = () => {
             >
               {loading ? "Creating Account..." : "Create Doctor Account"}
             </button>
-
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-              <p className="text-sm text-blue-800">
-                <strong>Note:</strong> After registration, you'll need to verify
-                your email and wait for admin approval before accessing your
-                account.
-              </p>
-            </div>
           </form>
-
-          {/* Footer */}
-          <div className="mt-6 text-center">
-            <p className="text-sm text-gray-600">
-              Already have an account?{" "}
-              <Link
-                to="/login"
-                className="font-medium text-green-600 hover:text-green-500"
-              >
-                Sign in here
-              </Link>
-            </p>
-          </div>
         </div>
       </div>
     </div>
