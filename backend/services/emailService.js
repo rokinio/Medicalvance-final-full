@@ -14,7 +14,7 @@ const transporter = nodemailer.createTransport({
 // تابع کلی برای ارسال ایمیل با استفاده از Nodemailer
 const sendEmail = async (to, subject, htmlContent) => {
   const mailOptions = {
-    from: `"MedPlatform Support" <${process.env.MAIL_FROM}>`, // آدرس فرستنده
+    from: `"Medicalvance Platform Support" <${process.env.MAIL_FROM}>`, // آدرس فرستنده
     to: to, // آدرس گیرنده
     subject: subject, // موضوع ایمیل
     html: htmlContent, // محتوای HTML
@@ -36,11 +36,11 @@ const sendEmail = async (to, subject, htmlContent) => {
 
 // تابع برای ارسال ایمیل تایید
 export const sendVerificationEmail = async (to, token) => {
-  const subject = "Verify Your Email for MedPlatform";
+  const subject = "Verify Your Email for Medicalvance Platform";
   const htmlContent = `
     <html>
       <body style="font-family: Arial, sans-serif; text-align: center; color: #333;">
-        <h2>Welcome to MedPlatform!</h2>
+        <h2>Welcome to Medicalvance Platform!</h2>
         <p>Thank you for registering. Please use the code below to verify your email address:</p>
         <div style="font-size: 28px; font-weight: bold; letter-spacing: 8px; background: #f2f2f2; padding: 15px 25px; border-radius: 8px; display: inline-block; margin: 20px 0;">
             ${token}
@@ -54,7 +54,7 @@ export const sendVerificationEmail = async (to, token) => {
 
 // تابع برای ارسال ایمیل ریست پسورد
 export const sendPasswordResetEmail = async (to, token) => {
-  const subject = "Password Reset Request for MedPlatform";
+  const subject = "Password Reset Request for Medicalvance Platform";
   const htmlContent = `
     <html>
       <body style="font-family: Arial, sans-serif; text-align: center; color: #333;">
