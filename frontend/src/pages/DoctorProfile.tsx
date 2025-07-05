@@ -3,6 +3,7 @@ import { useAuth } from "../contexts/AuthContext";
 import Layout from "../components/Layout";
 import { ChangePasswordModal } from "../components/ChangePasswordModal";
 import { ManageDocumentsModal } from "../components/ManageDocumentsModal";
+import LocationAutocomplete from "../components/LocationAutocomplete";
 import {
   Edit,
   KeyRound,
@@ -25,13 +26,13 @@ if (!API_URL) {
     "Fatal Error: VITE_API_BASE_URL is not defined in the build configuration."
   );
 }
-// Updated and complete list of available languages
+
 const availableLanguages = [
   "English",
-  "Persian", // اضافه شد
-  "Arabic", // Standard Arabic -> Arabic
+  "Persian",
+  "Arabic",
   "Spanish",
-  "German", // اضافه شد
+  "German",
   "French",
   "Russian",
   "Portuguese",
@@ -41,26 +42,12 @@ const availableLanguages = [
   "Urdu",
 ];
 
-// A sample list of countries for the location dropdown
-const countries = [
-  "United States",
-  "Canada",
-  "United Kingdom",
-  "Germany",
-  "France",
-  "Australia",
-  "Iran",
-  "Turkey",
-  "India",
-  "China",
-  "Russia",
-];
-
 const DoctorProfile: React.FC = () => {
   const { user, updateUserState } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   const [isPasswordModalOpen, setPasswordModalOpen] = useState(false);
   const [isDocumentsModalOpen, setDocumentsModalOpen] = useState(false);
+  const [profileImageFile, setProfileImageFile] = useState<File | null>(null);
 
   const [editData, setEditData] = useState({
     firstName: "",
@@ -93,28 +80,44 @@ const DoctorProfile: React.FC = () => {
 
   const handleSave = async () => {
     if (!user?.token) return;
+
+    const formData = new FormData();
+
+    // Append all text data
+    Object.entries(editData).forEach(([key, value]) => {
+      if (key === "languages" || key === "tags") {
+        formData.append(key, JSON.stringify(value));
+      } else {
+        formData.append(key, value as string);
+      }
+    });
+
+    // Append the profile image if it exists
+    if (profileImageFile) {
+      formData.append("profileImage", profileImageFile);
+    }
+
     try {
       const response = await fetch(`${API_URL}/api/users/profile`, {
         method: "PUT",
         headers: {
-          "Content-Type": "application/json",
           Authorization: `Bearer ${user.token}`,
         },
-        body: JSON.stringify(editData),
+        body: formData,
       });
+
       const updatedUser = await response.json();
       if (!response.ok) throw new Error(updatedUser.message);
       updateUserState(updatedUser);
       setIsEditing(false);
+      setProfileImageFile(null); // Clear the selected file after saving
     } catch (err: any) {
       alert(err.message);
     }
   };
 
   const handleChange = (
-    e: React.ChangeEvent<
-      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
-    >
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
     setEditData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
@@ -133,8 +136,16 @@ const DoctorProfile: React.FC = () => {
     setEditData((prev) => ({ ...prev, tags: tagsArray }));
   };
 
+  const handleLocationChange = (value: string) => {
+    setEditData((prev) => ({
+      ...prev,
+      location: value,
+    }));
+  };
+
   const handleCancel = () => {
     setIsEditing(false);
+    setProfileImageFile(null); // Clear selected file on cancel
   };
 
   if (!user)
@@ -190,15 +201,27 @@ const DoctorProfile: React.FC = () => {
                   <img
                     className="w-20 h-20 rounded-2xl object-cover border-4 border-white/50"
                     src={
-                      user.profileImage
+                      profileImageFile
+                        ? URL.createObjectURL(profileImageFile)
+                        : user.profileImage
                         ? `${API_URL}/${user.profileImage}`
                         : "https://via.placeholder.com/150"
                     }
                     alt="Profile"
                   />
-                  <button className="absolute -bottom-2 -right-2 w-8 h-8 bg-white rounded-full flex items-center justify-center shadow-lg">
-                    <Camera className="w-4 h-4 text-gray-600" />
-                  </button>
+                  {isEditing && (
+                    <label className="absolute -bottom-2 -right-2 w-8 h-8 bg-white rounded-full flex items-center justify-center shadow-lg cursor-pointer hover:bg-gray-100">
+                      <Camera className="w-4 h-4 text-gray-600" />
+                      <input
+                        type="file"
+                        className="hidden"
+                        accept="image/*"
+                        onChange={(e) =>
+                          setProfileImageFile(e.target.files?.[0] || null)
+                        }
+                      />
+                    </label>
+                  )}
                 </div>
                 <div className="text-white">
                   <h1 className="text-2xl font-bold">
@@ -315,21 +338,11 @@ const DoctorProfile: React.FC = () => {
                     Location of Practice
                   </label>
                   {isEditing ? (
-                    <select
-                      name="location"
+                    <LocationAutocomplete
                       value={editData.location}
-                      onChange={handleChange}
-                      className="w-full px-4 py-3 border rounded-lg mt-2 appearance-none bg-white"
-                    >
-                      <option value="" disabled>
-                        Select a country
-                      </option>
-                      {countries.map((country) => (
-                        <option key={country} value={country}>
-                          {country}
-                        </option>
-                      ))}
-                    </select>
+                      onChange={handleLocationChange}
+                      placeholder="Search for a city..."
+                    />
                   ) : (
                     <p className="mt-2 text-gray-900 text-base p-3 bg-gray-50 rounded-lg">
                       {editData.location || "Not specified"}
